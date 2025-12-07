@@ -20,28 +20,36 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // ✅ Protected route: returns USER ID directly from database
+    // 🔹 Simple test endpoint (NO JWT needed, just to verify controller works)
+    @GetMapping("/ping")
+    public Map<String, String> ping() {
+        System.out.println("✅ /api/user/ping hit");
+        Map<String, String> res = new HashMap<>();
+        res.put("status", "ok");
+        return res;
+    }
+
+    // 🔒 Protected route: returns USER ID directly from database
     @GetMapping("/me")
     public Map<String, Object> getUserInfo(@RequestHeader("Authorization") String authHeader) {
+        System.out.println("➡️ /api/user/me called");
 
-        // ✅ Remove "Bearer "
-        String token = authHeader.substring(7);
-
-        // ✅ Extract EMAIL from JWT
+        String token = authHeader.substring(7); // Remove "Bearer "
         String email = jwtUtil.extractEmail(token);
+        System.out.println("📧 Email from token: " + email);
 
-        // ✅ Fetch user directly from database
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
         if (optionalUser.isEmpty()) {
+            System.out.println("❌ No user found for email " + email);
             throw new RuntimeException("User not found for email: " + email);
         }
 
         User user = optionalUser.get();
+        System.out.println("✅ Found user with id " + user.getId());
 
-        // ✅ Send ID + EMAIL + NAME to frontend
         Map<String, Object> response = new HashMap<>();
-        response.put("id", user.getId());        // ✅ DB USER ID
+        response.put("id", user.getId());
         response.put("email", user.getEmail());
         response.put("name", user.getName());
 
